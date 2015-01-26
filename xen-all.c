@@ -38,6 +38,7 @@
 
 static MemoryRegion ram_memory, ram_640k, ram_lo, ram_hi;
 static MemoryRegion *framebuffer;
+static void * framebuffer_mapped;
 static bool xen_in_migration;
 static unsigned int serverid;
 static uint32_t xen_dmid = ~0;
@@ -1452,15 +1453,73 @@ void destroy_hvm_domain(bool reboot)
     }
 }
 
+
+/**
+ * Creates the internal framebuffer mapping used when QEMU internal
+ * components (e.g. the Surfman UI). This mapping is then used to get
+ * internal framebfufer pointers (in lieu of memory_region_get_ram_ptr),
+ * ensuring that our memory is mapped in a way that assures cache coherency.
+ */
+static void __xen_create_framebuffer_mapping(void)
+{
+    size_t number_of_pfns_to_map;
+    xen_pfn_t * pfns_to_map;
+    hwaddr vram_gmfn;
+    int i;
+
+
+    //Get the GMFN (guest machine frame) that contains the  framebuffer.
+    vram_gmfn = memory_region_get_ram_addr(framebuffer) >> TARGET_PAGE_BITS;
+
+
+    //Determine the total number of page frames used to store the framebuffer.
+    number_of_pfns_to_map = int128_get64(framebuffer->size) >> TARGET_PAGE_BITS;
+
+    //Build a list of guest page frames that will contain the framebuffer--
+    //we'll use this list to map the framebuffer into our memory space.
+    pfns_to_map = malloc(sizeof(*pfns_to_map) * number_of_pfns_to_map);
+    for(i = 0; i < number_of_pfns_to_map; ++i) {
+      pfns_to_map[i] =  vram_gmfn + i;
+    }
+
+
+    //Ask the hypervisor to perform the actual mapping, ensuring that we map
+    //the memory with write-combine caching. This ensures that any changes we
+    //make to the framebuffer are "immediately" applied to the VRAM, rather than
+    //sitting in a CPU cache.
+    framebuffer_mapped = xc_map_foreign_batch_cacheattr(xen_xc, xen_domid,
+                                                        PROT_READ | PROT_WRITE,
+                                                        pfns_to_map,
+                                                        number_of_pfns_to_map,
+                                                        XC_MAP_CACHEATTR_WC);
+
+    free(pfns_to_map);
+}
+
 void xen_register_framebuffer(MemoryRegion *mr)
 {
     framebuffer = mr;
+    __xen_create_framebuffer_mapping();
 }
 
 /* HACK: Get the framebuffer MemoryRegion to setup Surfman's plugins. */
 MemoryRegion *xen_get_framebuffer(void)
 {
     return framebuffer;
+}
+
+/**
+ * Return a pointer to the Xen framebuffer.
+ *
+ * This function should be used when the guest framebuffer needs to be modified by QEMU
+ * (e.g. when rendering glyphs in text-mode), rather than memory_region_get_ram_ptr, as
+ * we need to ensure that the VRAM memory has been mapped with the correct cache attributes.
+ *
+ * @return A QEMU-accessible pointer to the Xen guest's framebuffer.
+ */
+void * xen_get_framebuffer_ptr(void)
+{
+    return framebuffer_mapped;
 }
 
 void xen_shutdown_fatal_error(const char *fmt, ...)

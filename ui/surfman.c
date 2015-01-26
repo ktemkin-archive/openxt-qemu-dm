@@ -165,7 +165,7 @@ void surfman_display_init(DisplayState *ds)
         surfman_error("Could not recover VRAM MemoryRegion.");
         goto err_vram;
     }
-    ss->vram_ptr = memory_region_get_ram_ptr(ss->vram);
+    ss->vram_ptr = xen_get_framebuffer_ptr();
     ss->dmbus_service = dmbus_service_connect(DMBUS_SERVICE_SURFMAN, DEVICE_TYPE_VESA, &surfman_dmbus_ops, ss);
     if (!ss->dmbus_service) {
         surfman_error("Could not initialize dmbus.");
