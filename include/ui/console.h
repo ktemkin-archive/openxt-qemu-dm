@@ -476,6 +476,11 @@ static inline int vnc_display_pw_expire(DisplayState *ds, time_t expires)
 };
 #endif
 
+#ifdef CONFIG_SURFMAN
+/* surfman.c */
+void surfman_display_init(DisplayState *ds);
+#endif
+
 /* curses.c */
 void curses_display_init(DisplayState *ds, int full_screen);
 

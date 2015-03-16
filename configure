@@ -225,6 +225,7 @@ libiscsi=""
 coroutine=""
 seccomp=""
 glusterfs=""
+surfman="no"
 virtio_blk_data_plane=""
 
 # parse CC options first
@@ -896,6 +897,10 @@ for opt do
   --disable-virtio-blk-data-plane) virtio_blk_data_plane="no"
   ;;
   --enable-virtio-blk-data-plane) virtio_blk_data_plane="yes"
+  ;;
+  --enable-surfman) surfman="yes"
+  ;;
+  --disable-surfman) surfman="no"
   ;;
   *) echo "ERROR: unknown option $opt"; show_help="yes"
   ;;
@@ -3342,6 +3347,7 @@ echo "seccomp support   $seccomp"
 echo "coroutine backend $coroutine_backend"
 echo "GlusterFS support $glusterfs"
 echo "virtio-blk-data-plane $virtio_blk_data_plane"
+echo "Surfman support   $surfman"
 echo "gcov              $gcov_tool"
 echo "gcov enabled      $gcov"
 
@@ -3741,6 +3747,12 @@ fi
 echo "CONFIG_TRACE_FILE=$trace_file" >> $config_host_mak
 if test "$trace_default" = "yes"; then
   echo "CONFIG_TRACE_DEFAULT=y" >> $config_host_mak
+fi
+
+##########################################
+# Surfman support.
+if test "$surfman" = "yes"; then
+  echo "CONFIG_SURFMAN=y" >> $config_host_mak
 fi
 
 echo "TOOLS=$tools" >> $config_host_mak

@@ -182,7 +182,7 @@ int main(int argc, char **argv)
 static const char *data_dir;
 const char *bios_name = NULL;
 enum vga_retrace_method vga_retrace_method = VGA_RETRACE_DUMB;
-DisplayType display_type = DT_XEN;
+DisplayType display_type;
 static int display_remote;
 const char* keyboard_layout = NULL;
 ram_addr_t ram_size;
@@ -2205,6 +2205,13 @@ static DisplayType select_display(const char *p)
         display = DT_CURSES;
 #else
         fprintf(stderr, "Curses support is disabled\n");
+        exit(1);
+#endif
+    } else if (strstart(p, "surfman", &opts)) {
+#ifdef CONFIG_SURFMAN
+        display = DT_SURFMAN;
+#else
+        fprintf(stderr, "Surfman support is disabled\n");
         exit(1);
 #endif
     } else if (strstart(p, "none", &opts)) {
@@ -4252,9 +4259,12 @@ int main(int argc, char **argv, char **envp)
         cocoa_display_init(ds, full_screen);
         break;
 #endif
-    case DT_XEN:
+#if defined(CONFIG_SURFMAN)
+    case DT_SURFMAN:
         xen_input_init();
+        surfman_display_init(ds);
         break;
+#endif
     default:
         break;
     }
