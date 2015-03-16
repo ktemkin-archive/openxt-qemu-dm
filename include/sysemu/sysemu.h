@@ -91,6 +91,7 @@ typedef enum DisplayType
     DT_SDL,
     DT_NOGRAPHIC,
     DT_NONE,
+    DT_XEN /* XenClient: Xen Display */
 } DisplayType;
 
 extern int autostart;

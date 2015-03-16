@@ -169,6 +169,7 @@ int main(int argc, char **argv)
 
 #include "ui/qemu-spice.h"
 #include "qapi/string-input-visitor.h"
+#include "ui/xen-input.h"
 
 //#define DEBUG_NET
 //#define DEBUG_SLIRP
@@ -181,7 +182,7 @@ int main(int argc, char **argv)
 static const char *data_dir;
 const char *bios_name = NULL;
 enum vga_retrace_method vga_retrace_method = VGA_RETRACE_DUMB;
-DisplayType display_type = DT_DEFAULT;
+DisplayType display_type = DT_XEN;
 static int display_remote;
 const char* keyboard_layout = NULL;
 ram_addr_t ram_size;
@@ -4251,6 +4252,9 @@ int main(int argc, char **argv, char **envp)
         cocoa_display_init(ds, full_screen);
         break;
 #endif
+    case DT_XEN:
+        xen_input_init();
+        break;
     default:
         break;
     }

@@ -59,6 +59,7 @@ void qemu_remove_led_event_handler(QEMUPutLEDEntry *entry);
 void kbd_put_keycode(int keycode);
 void kbd_put_ledstate(int ledstate);
 void kbd_mouse_event(int dx, int dy, int dz, int buttons_state);
+void kbd_mouse_event_absolute(int x, int y, int dz, int buttons_state);
 
 /* Does the current mouse generate absolute events */
 int kbd_mouse_is_absolute(void);
